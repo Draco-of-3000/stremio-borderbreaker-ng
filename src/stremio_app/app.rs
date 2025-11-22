@@ -84,6 +84,14 @@ pub struct MainWindow {
     #[nwg_control]
     #[nwg_events(OnNotice: [Self::on_focus_notice] )]
     pub focus_notice: nwg::Notice,
+
+    #[nwg_control(parent: window, key: nwg::keys::A)]
+    #[nwg_events( OnPress: [Self::on_cycle_aspect] )]
+    pub cycle_aspect_accel: nwg::Accelerator,
+
+    #[nwg_control(parent: window, key: nwg::keys::U, modifiers: nwg::keys::MOD_SHIFT | nwg::keys::MOD_CONTROL)]
+    #[nwg_events( OnPress: [Self::on_toggle_fill] )]
+    pub toggle_fill_accel: nwg::Accelerator,
 }
 
 impl MainWindow {
@@ -354,6 +362,21 @@ impl MainWindow {
         if !self.splash_screen.visible() {
             self.webview.fit_to_window(self.window.handle.hwnd());
         }
+        // BorderBreaker: Notify player of window size
+        if let Some(hwnd) = self.window.handle.hwnd() {
+             let mut rect = nwg::RECT::default();
+             unsafe { winapi::um::winuser::GetClientRect(hwnd, &mut rect) };
+             let width = (rect.right - rect.left) as u32;
+             let height = (rect.bottom - rect.top) as u32;
+             
+             let player_channel = self.player.channel.borrow();
+             if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
+                 let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::WindowResized(
+                    crate::stremio_app::stremio_player::InMsgArgs::WindowResized(width, height)
+                )).unwrap();
+                player_tx.send(msg).ok();
+             }
+        }
     }
     fn on_toggle_fullscreen_notice(&self) {
         if let Some(hwnd) = self.window.handle.hwnd() {
@@ -420,5 +443,25 @@ impl MainWindow {
         self.window.set_visible(false);
         self.tray.tray_show_hide.set_checked(self.window.visible());
         self.transmit_window_visibility_change();
+    }
+
+    fn on_cycle_aspect(&self) {
+        let player_channel = self.player.channel.borrow();
+        if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
+             let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::CycleAspect(
+                crate::stremio_app::stremio_player::InMsgArgs::None
+            )).unwrap();
+            player_tx.send(msg).ok();
+        }
+    }
+
+    fn on_toggle_fill(&self) {
+        let player_channel = self.player.channel.borrow();
+        if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
+             let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::ToggleFill(
+                crate::stremio_app::stremio_player::InMsgArgs::None
+            )).unwrap();
+            player_tx.send(msg).ok();
+        }
     }
 }
