@@ -106,30 +106,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 [CustomMessages]
 RemoveDataFolder=Remove all data and configuration?
 english.RemoveDataFolder=Remove all data and configuration?
-armenian.RemoveDataFolder=Հեռացնե՞լ բոլոր տվյալները և կոնֆիգուրացիան:
-brazilianportuguese.RemoveDataFolder=Remover todos os dados e configuração?
-bulgarian.RemoveDataFolder=Премахване на всички данни и конфигурация?
-catalan.RemoveDataFolder=Vols suprimir totes les dades i la configuració?
-corsican.RemoveDataFolder=Eliminate tutti i dati è a cunfigurazione?
-czech.RemoveDataFolder=Odebrat všechna data a konfiguraci?
-danish.RemoveDataFolder=Remove all data and configuration?
-dutch.RemoveDataFolder=Remove all data and configuration?
-finnish.RemoveDataFolder=Poistetaanko kaikki tiedot ja asetukset?
-french.RemoveDataFolder=Supprimer toutes les données et la configuration ?
-german.RemoveDataFolder=Alle Daten und Konfiguration entfernen?
-hebrew.RemoveDataFolder=Remove all data and configuration?
-icelandic.RemoveDataFolder=Fjarlægja öll gögn og stillingar?
-italian.RemoveDataFolder=Rimuovere tutti i dati e la configurazione?
-japanese.RemoveDataFolder=すべてのデータと構成を削除しますか?
-norwegian.RemoveDataFolder=Vil du fjerne all data og konfigurasjon?
-polish.RemoveDataFolder=Usunąć wszystkie dane i konfigurację?
-portuguese.RemoveDataFolder=Remover todos os dados e configuração?
-russian.RemoveDataFolder=Удалить все данные и конфигурацию?
-slovak.RemoveDataFolder=Chcete odstrániť všetky údaje a konfiguráciu?
-slovenian.RemoveDataFolder=Želite odstraniti vse podatke in konfiguracijo?
-spanish.RemoveDataFolder=¿Eliminar todos los datos y la configuración?
-turkish.RemoveDataFolder=Tüm veriler ve yapılandırma kaldırılsın mı?
-ukrainian.RemoveDataFolder=Видалити всі дані та конфігурацію?
 
 [Tasks]
 Name: "runapp"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"
