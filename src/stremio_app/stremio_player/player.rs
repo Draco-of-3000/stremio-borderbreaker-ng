@@ -4,6 +4,8 @@ use flume::{Receiver, Sender};
 use libmpv2::{events::Event, events::EventContext, Format, Mpv, SetData};
 use native_windows_gui::{self as nwg, PartialUi};
 use std::{
+    env, fs,
+    path::PathBuf,
     sync::Arc,
     thread::{self, JoinHandle},
 };
@@ -206,6 +208,14 @@ fn create_shareable_mpv(window_handle: HWND) -> Arc<Mpv> {
         set_property!("title", "Stremio");
         set_property!("audio-client-name", "Stremio");
         set_property!("terminal", "yes");
+        if let Some(log_path) = mpv_log_path() {
+            let _ = fs::create_dir_all(
+                log_path
+                    .parent()
+                    .expect("mpv log path should have a parent directory"),
+            );
+            set_property!("log-file", log_path.to_string_lossy().as_ref());
+        }
         #[cfg(debug_assertions)]
         set_property!("msg-level", "all=no,cplayer=debug");
         #[cfg(not(debug_assertions))]
@@ -451,6 +461,15 @@ fn create_message_thread(
             }
         }
     })
+}
+
+fn mpv_log_path() -> Option<PathBuf> {
+    let base = env::var_os("LOCALAPPDATA").or_else(|| env::var_os("APPDATA"))?;
+    let mut path = PathBuf::from(base);
+    path.push("StremioShellNG");
+    path.push("logs");
+    path.push("mpv.log");
+    Some(path)
 }
 
 trait MpvExt {
