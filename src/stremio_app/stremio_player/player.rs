@@ -17,6 +17,8 @@ use serde_json::Value;
 
 enum InternalEvent {
     VideoParamsChanged(Value),
+    StartFile,
+    FileLoaded,
 }
 
 struct BorderBreaker {
@@ -27,6 +29,7 @@ struct BorderBreaker {
     // show_overlay: bool, // assumed true
     current_video_params: Option<Value>,
     window_size: (u32, u32),
+    video_ready: bool,
 }
 
 impl Default for BorderBreaker {
@@ -59,6 +62,7 @@ impl Default for BorderBreaker {
             ],
             current_video_params: None,
             window_size: (0, 0),
+            video_ready: false,
         }
     }
 }
@@ -69,6 +73,9 @@ impl BorderBreaker {
         let ratio = self.mode_ratios[mode];
 
         if mode == 0 {
+            if !self.video_ready {
+                return;
+            }
             // Auto
             if let Some(ref params) = self.current_video_params {
                 self.check_auto_detect(params, mpv);
@@ -257,6 +264,14 @@ fn create_event_thread(
 
                     PlayerResponse("mpv-prop-change", PlayerEvent::PropChange(prop_change))
                 }
+                Event::StartFile => {
+                    internal_sender.send(InternalEvent::StartFile).ok();
+                    continue;
+                }
+                Event::FileLoaded => {
+                    internal_sender.send(InternalEvent::FileLoaded).ok();
+                    continue;
+                }
                 Event::EndFile(reason) => PlayerResponse(
                     "mpv-event-ended",
                     PlayerEvent::End(PlayerEnded::from_end_reason(reason)),
@@ -422,6 +437,13 @@ fn create_message_thread(
                 MessageType::Internal(event) => match event {
                     InternalEvent::VideoParamsChanged(params) => {
                         bb.current_video_params = Some(params.clone());
+                        bb.apply_aspect(&mpv);
+                    }
+                    InternalEvent::StartFile => {
+                        bb.video_ready = false;
+                    }
+                    InternalEvent::FileLoaded => {
+                        bb.video_ready = true;
                         bb.apply_aspect(&mpv);
                     }
                 },
