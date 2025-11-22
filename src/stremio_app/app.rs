@@ -364,8 +364,15 @@ impl MainWindow {
         }
         // BorderBreaker: Notify player of window size
         if let Some(hwnd) = self.window.handle.hwnd() {
-            let mut rect = RECT::default();
-            unsafe { GetClientRect(hwnd, &mut rect) };
+            let mut rect = RECT {
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+            };
+            unsafe {
+                GetClientRect(hwnd, &mut rect);
+            }
             let width = (rect.right - rect.left) as u32;
             let height = (rect.bottom - rect.top) as u32;
 
