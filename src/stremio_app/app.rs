@@ -404,7 +404,11 @@ impl MainWindow {
         }
     }
     fn ctrl_shift_down() -> bool {
-        unsafe { (GetKeyState(VK_CONTROL) & 0x8000) != 0 && (GetKeyState(VK_SHIFT) & 0x8000) != 0 }
+        const KEY_PRESSED_MASK: i16 = 0x8000u16 as i16;
+        unsafe {
+            (GetKeyState(VK_CONTROL) & KEY_PRESSED_MASK) != 0
+                && (GetKeyState(VK_SHIFT) & KEY_PRESSED_MASK) != 0
+        }
     }
     fn on_toggle_fullscreen_notice(&self) {
         if let Some(hwnd) = self.window.handle.hwnd() {

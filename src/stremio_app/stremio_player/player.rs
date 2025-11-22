@@ -396,7 +396,8 @@ fn create_message_thread(
                             set_property(name, value, &mpv);
                         }
                         InMsg::MpvSetProp(InMsgArgs::StProp(name, PropVal::Str(value))) => {
-                            let value = if name.to_string() == "vo" {
+                            let needs_gpu_append = name == "vo";
+                            let value = if needs_gpu_append {
                                 let mut value = value;
                                 if !value.is_empty() && !value.ends_with(',') {
                                     value.push(',');
