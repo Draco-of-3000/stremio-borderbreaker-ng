@@ -67,6 +67,7 @@ impl StremioServer {
                 .and_then(fs::canonicalize)
                 .expect("Cannot get the current executable path");
             path.pop();
+            ensure_hw_probe_sample(&path);
             let lines = Arc::new(Mutex::new(String::new()));
             let runtime_path = path.clone().join(path::Path::new("stremio-runtime"));
             let server_path = path.clone().join(path::Path::new("server.js"));
@@ -212,5 +213,50 @@ impl PartialUi for StremioServer {
             );
             self.start();
         }
+    }
+}
+
+fn ensure_hw_probe_sample(base_path: &path::Path) {
+    let samples_dir = base_path.join("samples");
+    let sample_path = samples_dir.join("hevc.mkv");
+    if sample_path.exists() {
+        return;
+    }
+    if let Err(err) = fs::create_dir_all(&samples_dir) {
+        eprintln!("Failed to create samples directory: {err}");
+        return;
+    }
+
+    let ffmpeg_path = base_path.join("bin").join("ffmpeg.exe");
+    if !ffmpeg_path.exists() {
+        eprintln!("ffmpeg executable not found at {ffmpeg_path:?}");
+        return;
+    }
+
+    println!("Generating hw probe sample at {:?}", sample_path);
+    let status = Command::new(ffmpeg_path)
+        .args([
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=320x180:rate=30",
+            "-t",
+            "2",
+            "-pix_fmt",
+            "yuv420p",
+            "-c:v",
+            "libx265",
+            sample_path.to_string_lossy().as_ref(),
+        ])
+        .creation_flags(CREATE_NO_WINDOW)
+        .status();
+
+    match status {
+        Ok(status) if status.success() => println!("Sample generated successfully"),
+        Ok(status) => eprintln!("ffmpeg exited with status {status}"),
+        Err(err) => eprintln!("Failed to run ffmpeg: {err}"),
     }
 }
