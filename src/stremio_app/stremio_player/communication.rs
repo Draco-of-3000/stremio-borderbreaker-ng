@@ -1,5 +1,5 @@
 use core::convert::TryFrom;
-use libmpv2::{events::PropertyData, mpv_end_file_reason, EndFileReason};
+use libmpv2::{events::PropertyData, mpv_end_file_reason, mpv_node::MpvNode, EndFileReason};
 use parse_display::{Display, FromStr};
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -30,7 +30,7 @@ impl PlayerProprChange {
                     serde_json::Value::String(s.to_string())
                 }
             }
-            PropertyData::Node(_) => unimplemented!("`PropertyData::Node` is not supported"),
+            PropertyData::Node(node) => mpv_node_to_value(node),
         }
     }
     pub fn from_name_value(name: String, value: PropertyData) -> Self {
@@ -39,6 +39,28 @@ impl PlayerProprChange {
             name,
             data: Self::value_from_format(value, is_json),
         }
+    }
+    pub fn data(&self) -> &serde_json::Value {
+        &self.data
+    }
+}
+
+fn mpv_node_to_value(node: MpvNode) -> serde_json::Value {
+    match node {
+        MpvNode::Flag(b) => serde_json::Value::Bool(b),
+        MpvNode::Int64(i) => serde_json::Value::Number(serde_json::Number::from(i)),
+        MpvNode::Double(f) => serde_json::Number::from_f64(f)
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null),
+        MpvNode::String(s) => serde_json::Value::String(s),
+        MpvNode::ArrayIter(iter) => serde_json::Value::Array(iter.map(mpv_node_to_value).collect()),
+        MpvNode::MapIter(iter) => {
+            let map = iter
+                .map(|(k, v)| (k, mpv_node_to_value(v)))
+                .collect::<serde_json::Map<_, _>>();
+            serde_json::Value::Object(map)
+        }
+        MpvNode::None => serde_json::Value::Null,
     }
 }
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]

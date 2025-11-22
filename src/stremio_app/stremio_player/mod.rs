@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 pub mod player;
 pub use player::Player;
 pub mod communication;
@@ -23,15 +25,6 @@ pub enum InMsgArgs {
     Cmd(CmdVal),
     WindowResized(u32, u32),
     None,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub enum InMsgFn {
-    MpvObserveProp,
-    MpvSetProp,
-    MpvCommand,
-    WindowResized,
-    CycleAspect,
-    ToggleFill,
 }
 #[cfg(test)]
 mod communication_tests;

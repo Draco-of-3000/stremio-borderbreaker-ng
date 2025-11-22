@@ -10,8 +10,8 @@ use std::{
 use winapi::shared::windef::HWND;
 
 use crate::stremio_app::stremio_player::{
-    CmdVal, InMsg, InMsgArgs, InMsgFn, PlayerEnded, PlayerEvent, PlayerProprChange, PlayerResponse,
-    PropKey, PropVal,
+    CmdVal, InMsg, InMsgArgs, PlayerEnded, PlayerEvent, PlayerProprChange, PlayerResponse, PropKey,
+    PropVal,
 };
 use serde_json::Value;
 
@@ -254,23 +254,16 @@ fn create_event_thread(
             // even if you don't do anything with the events, it is still necessary to empty the event loop
             let player_response = match event {
                 Event::PropertyChange { name, change, .. } => {
+                    let prop_change = PlayerProprChange::from_name_value(name.to_string(), change);
                     if name == "video-out-params" {
-                        let prop_change =
-                            PlayerProprChange::from_name_value(name.to_string(), change);
-                        if let PlayerProprChange::Node(val) = &prop_change {
-                            internal_sender
-                                .send(InternalEvent::VideoParamsChanged(val.clone()))
-                                .ok();
-                        }
+                        internal_sender
+                            .send(InternalEvent::VideoParamsChanged(
+                                prop_change.data().clone(),
+                            ))
+                            .ok();
                     }
 
-                    PlayerResponse(
-                        "mpv-prop-change",
-                        PlayerEvent::PropChange(PlayerProprChange::from_name_value(
-                            name.to_string(),
-                            change,
-                        )),
-                    )
+                    PlayerResponse("mpv-prop-change", PlayerEvent::PropChange(prop_change))
                 }
                 Event::EndFile(reason) => PlayerResponse(
                     "mpv-event-ended",

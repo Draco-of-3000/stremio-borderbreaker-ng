@@ -13,7 +13,13 @@ use std::{
     thread, time,
 };
 use url::Url;
-use winapi::um::{winbase::CREATE_BREAKAWAY_FROM_JOB, winuser::WS_EX_TOPMOST};
+use winapi::{
+    shared::windef::RECT,
+    um::{
+        winbase::CREATE_BREAKAWAY_FROM_JOB,
+        winuser::{GetClientRect, GetKeyState, VK_CONTROL, VK_SHIFT, WS_EX_TOPMOST},
+    },
+};
 
 use crate::stremio_app::{
     constants::{APP_NAME, UPDATE_ENDPOINT, UPDATE_INTERVAL, WINDOW_MIN_HEIGHT, WINDOW_MIN_WIDTH},
@@ -41,7 +47,6 @@ pub struct MainWindow {
     pub release_candidate: bool,
     pub autoupdater_setup_file: Arc<Mutex<Option<PathBuf>>>,
     pub saved_window_style: RefCell<WindowStyle>,
-    #[nwg_skip]
     pub last_reported_size: RefCell<(u32, u32)>,
     #[nwg_resource]
     pub embed: nwg::EmbedResource,
@@ -56,6 +61,7 @@ pub struct MainWindow {
         OnWindowMinimize: [Self::transmit_window_state_change],
         OnWindowMaximize: [Self::transmit_window_state_change],
         OnWindowFocus: [Self::transmit_window_state_change],
+        OnKeyPress: [Self::on_key_press(SELF, EVT_DATA)],
     )]
     pub window: nwg::Window,
     #[nwg_partial(parent: window)]
@@ -86,14 +92,6 @@ pub struct MainWindow {
     #[nwg_control]
     #[nwg_events(OnNotice: [Self::on_focus_notice] )]
     pub focus_notice: nwg::Notice,
-
-    #[nwg_control(parent: window, key: nwg::keys::A)]
-    #[nwg_events( OnPress: [Self::on_cycle_aspect] )]
-    pub cycle_aspect_accel: nwg::Accelerator,
-
-    #[nwg_control(parent: window, key: nwg::keys::U, modifiers: nwg::keys::MOD_SHIFT | nwg::keys::MOD_CONTROL)]
-    #[nwg_events( OnPress: [Self::on_toggle_fill] )]
-    pub toggle_fill_accel: nwg::Accelerator,
 }
 
 impl MainWindow {
@@ -366,8 +364,8 @@ impl MainWindow {
         }
         // BorderBreaker: Notify player of window size
         if let Some(hwnd) = self.window.handle.hwnd() {
-            let mut rect = nwg::RECT::default();
-            unsafe { winapi::um::winuser::GetClientRect(hwnd, &mut rect) };
+            let mut rect = RECT::default();
+            unsafe { GetClientRect(hwnd, &mut rect) };
             let width = (rect.right - rect.left) as u32;
             let height = (rect.bottom - rect.top) as u32;
 
@@ -388,6 +386,18 @@ impl MainWindow {
                 }
             }
         }
+    }
+    fn on_key_press(&self, data: &nwg::EventData) {
+        if let nwg::EventData::OnKey(key) = data {
+            match *key {
+                nwg::keys::_A => self.on_cycle_aspect(),
+                nwg::keys::_U if Self::ctrl_shift_down() => self.on_toggle_fill(),
+                _ => {}
+            }
+        }
+    }
+    fn ctrl_shift_down() -> bool {
+        unsafe { (GetKeyState(VK_CONTROL) & 0x8000) != 0 && (GetKeyState(VK_SHIFT) & 0x8000) != 0 }
     }
     fn on_toggle_fullscreen_notice(&self) {
         if let Some(hwnd) = self.window.handle.hwnd() {
