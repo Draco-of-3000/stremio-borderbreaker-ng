@@ -397,7 +397,7 @@ impl MainWindow {
     fn on_key_press(&self, data: &nwg::EventData) {
         if let nwg::EventData::OnKey(key) = data {
             match *key {
-                nwg::keys::_A => self.on_cycle_aspect(),
+                nwg::keys::_R => self.on_cycle_aspect(),
                 nwg::keys::_U if Self::ctrl_shift_down() => self.on_toggle_fill(),
                 _ => {}
             }
