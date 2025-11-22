@@ -4,8 +4,8 @@ use crate::stremio_app::stremio_player::{
 };
 use libmpv2::{events::PropertyData, mpv_end_file_reason};
 
-use serde_test::{assert_tokens, Token};
 use serde_json::json;
+use serde_test::{assert_tokens, Token};
 
 #[test]
 fn propr_change_tokens() {
@@ -92,8 +92,7 @@ fn ob_prop_serialization() {
 
 #[test]
 fn set_prop_serialization() {
-    let msg =
-        InMsg::MpvSetProp(InMsgArgs::StProp("pause".to_string(), PropVal::Bool(true)));
+    let msg = InMsg::MpvSetProp(InMsgArgs::StProp("pause".to_string(), PropVal::Bool(true)));
     let value = serde_json::to_value(&msg).unwrap();
     assert_eq!(value, json!({"c":"MpvSetProp","a":["pause",true]}));
 }

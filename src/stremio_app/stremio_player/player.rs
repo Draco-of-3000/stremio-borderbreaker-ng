@@ -143,6 +143,8 @@ impl BorderBreaker {
         let _ = mpv.command("show-text", &[text]);
     }
 }
+
+struct ObserveProperty {
     name: String,
     format: Format,
 }
@@ -180,7 +182,12 @@ impl PartialUi for Player {
             rpc_response_sender,
             internal_sender,
         );
-        let _message_thread = create_message_thread(mpv, observe_property_sender, in_msg_receiver, internal_receiver);
+        let _message_thread = create_message_thread(
+            mpv,
+            observe_property_sender,
+            in_msg_receiver,
+            internal_receiver,
+        );
         // @TODO implement a mechanism to stop threads on `Player` drop if needed
 
         Ok(())
@@ -248,19 +255,23 @@ fn create_event_thread(
             let player_response = match event {
                 Event::PropertyChange { name, change, .. } => {
                     if name == "video-out-params" {
-                         let prop_change = PlayerProprChange::from_name_value(name.to_string(), change);
-                         if let PlayerProprChange::Node(val) = &prop_change {
-                             internal_sender.send(InternalEvent::VideoParamsChanged(val.clone())).ok();
-                         }
+                        let prop_change =
+                            PlayerProprChange::from_name_value(name.to_string(), change);
+                        if let PlayerProprChange::Node(val) = &prop_change {
+                            internal_sender
+                                .send(InternalEvent::VideoParamsChanged(val.clone()))
+                                .ok();
+                        }
                     }
 
                     PlayerResponse(
-                    "mpv-prop-change",
-                    PlayerEvent::PropChange(PlayerProprChange::from_name_value(
-                        name.to_string(),
-                        change,
-                    )),
-                )},
+                        "mpv-prop-change",
+                        PlayerEvent::PropChange(PlayerProprChange::from_name_value(
+                            name.to_string(),
+                            change,
+                        )),
+                    )
+                }
                 Event::EndFile(reason) => PlayerResponse(
                     "mpv-event-ended",
                     PlayerEvent::End(PlayerEnded::from_end_reason(reason)),
@@ -343,7 +354,7 @@ fn create_message_thread(
         }
 
         // -- InMsg handler loop --
-        
+
         enum MessageType {
             InMsg(String),
             Internal(InternalEvent),

@@ -32,6 +32,6 @@ pub enum InMsgFn {
     WindowResized,
     CycleAspect,
     ToggleFill,
-};
+}
 #[cfg(test)]
 mod communication_tests;

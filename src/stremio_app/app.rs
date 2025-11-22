@@ -459,9 +459,11 @@ impl MainWindow {
     fn on_cycle_aspect(&self) {
         let player_channel = self.player.channel.borrow();
         if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
-             let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::CycleAspect(
-                crate::stremio_app::stremio_player::InMsgArgs::None
-            )).unwrap();
+            let msg =
+                serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::CycleAspect(
+                    crate::stremio_app::stremio_player::InMsgArgs::None,
+                ))
+                .unwrap();
             player_tx.send(msg).ok();
         }
     }
@@ -469,9 +471,11 @@ impl MainWindow {
     fn on_toggle_fill(&self) {
         let player_channel = self.player.channel.borrow();
         if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
-             let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::ToggleFill(
-                crate::stremio_app::stremio_player::InMsgArgs::None
-            )).unwrap();
+            let msg =
+                serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::ToggleFill(
+                    crate::stremio_app::stremio_player::InMsgArgs::None,
+                ))
+                .unwrap();
             player_tx.send(msg).ok();
         }
     }
