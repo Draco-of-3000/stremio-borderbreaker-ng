@@ -68,10 +68,6 @@ impl BorderBreaker {
         let mode = self.aspect_mode;
         let ratio = self.mode_ratios[mode];
 
-        // Reset first
-        let _ = mpv.set_property("panscan", 0.0);
-        let _ = mpv.set_property("video-aspect-override", -1.0);
-
         if mode == 0 {
             // Auto
             if let Some(ref params) = self.current_video_params {
@@ -109,10 +105,6 @@ impl BorderBreaker {
             let screen_ratio = self.window_size.0 as f64 / self.window_size.1 as f64;
             let ratio_diff = (video_ratio - screen_ratio).abs();
             let tolerance = 0.05;
-
-            // Reset first (already done in apply_aspect but good for safety if called independently)
-            let _ = mpv.set_property("panscan", 0.0);
-            let _ = mpv.set_property("video-aspect-override", -1.0);
 
             if ratio_diff < tolerance {
                 return;
