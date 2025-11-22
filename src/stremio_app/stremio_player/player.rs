@@ -40,15 +40,22 @@ impl Default for BorderBreaker {
                 "16:9",
                 "4:3",
                 "1:1",
-                "21:9",
-                "Ultrawide",
-                "32:9",
-                "Super Ultrawide",
+                "21:9 Ultrawide",
+                "32:9 Super Ultrawide",
                 "Cinema",
                 "Original",
             ],
             mode_ratios: vec![
-                0.0, -2.0, -3.0, 1.7778, 1.3333, 1.0, 2.3333, 2.3704, 3.5556, 3.5556, 2.39, -1.0,
+                0.0,
+                -2.0,
+                -3.0,
+                16.0 / 9.0,
+                4.0 / 3.0,
+                1.0,
+                21.0 / 9.0,
+                32.0 / 9.0,
+                2.39,
+                -1.0,
             ],
             current_video_params: None,
             window_size: (0, 0),
@@ -402,13 +409,7 @@ fn create_message_thread(
                         }
                         InMsg::WindowResized(InMsgArgs::WindowResized(w, h)) => {
                             bb.window_size = (w, h);
-                            if bb.aspect_mode == 0 {
-                                if let Some(ref params) = bb.current_video_params {
-                                    bb.check_auto_detect(params, &mpv);
-                                }
-                            } else if bb.aspect_mode == 2 { // Stretch
-                                bb.apply_aspect(&mpv);
-                            }
+                            bb.apply_aspect(&mpv);
                         }
                         InMsg::CycleAspect(_) => {
                             bb.cycle_aspect(&mpv);
@@ -424,9 +425,7 @@ fn create_message_thread(
                 MessageType::Internal(event) => match event {
                     InternalEvent::VideoParamsChanged(params) => {
                         bb.current_video_params = Some(params.clone());
-                        if bb.aspect_mode == 0 {
-                            bb.check_auto_detect(&params, &mpv);
-                        }
+                        bb.apply_aspect(&mpv);
                     }
                 },
                 MessageType::Exit => break,

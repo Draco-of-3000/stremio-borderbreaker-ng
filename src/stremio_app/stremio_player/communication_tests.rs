@@ -1,10 +1,11 @@
-use crate::stremio_app::stremio_player::communication::{
-    BoolProp, CmdVal, InMsg, InMsgArgs, InMsgFn, MpvCmd, PlayerEnded, PlayerProprChange, PropKey,
-    PropVal,
+use crate::stremio_app::stremio_player::{
+    communication::{BoolProp, CmdVal, MpvCmd, PlayerEnded, PlayerProprChange, PropKey, PropVal},
+    InMsg, InMsgArgs,
 };
 use libmpv2::{events::PropertyData, mpv_end_file_reason};
 
 use serde_test::{assert_tokens, Token};
+use serde_json::json;
 
 #[test]
 fn propr_change_tokens() {
@@ -83,85 +84,36 @@ fn ended_tokens() {
 }
 
 #[test]
-fn ob_propr_tokens() {
-    assert_tokens(
-        &InMsg(
-            InMsgFn::MpvObserveProp,
-            InMsgArgs::ObProp(PropKey::Bool(BoolProp::Pause)),
-        ),
-        &[
-            Token::TupleStruct {
-                name: "InMsg",
-                len: 2,
-            },
-            Token::Str("mpv-observe-prop"),
-            Token::Str("pause"),
-            Token::TupleStructEnd,
-        ],
-    );
+fn ob_prop_serialization() {
+    let msg = InMsg::MpvObserveProp(InMsgArgs::ObProp(PropKey::Bool(BoolProp::Pause)));
+    let value = serde_json::to_value(&msg).unwrap();
+    assert_eq!(value, json!({"c":"MpvObserveProp","a":"pause"}));
 }
 
 #[test]
-fn set_propr_tokens() {
-    assert_tokens(
-        &InMsg(
-            InMsgFn::MpvSetProp,
-            InMsgArgs::StProp(PropKey::Bool(BoolProp::Pause), PropVal::Bool(true)),
-        ),
-        &[
-            Token::TupleStruct {
-                name: "InMsg",
-                len: 2,
-            },
-            Token::Str("mpv-set-prop"),
-            Token::Tuple { len: 2 },
-            Token::Str("pause"),
-            Token::Bool(true),
-            Token::TupleEnd,
-            Token::TupleStructEnd,
-        ],
-    );
+fn set_prop_serialization() {
+    let msg =
+        InMsg::MpvSetProp(InMsgArgs::StProp("pause".to_string(), PropVal::Bool(true)));
+    let value = serde_json::to_value(&msg).unwrap();
+    assert_eq!(value, json!({"c":"MpvSetProp","a":["pause",true]}));
 }
 
 #[test]
-fn command_stop_tokens() {
-    assert_tokens(
-        &InMsg(
-            InMsgFn::MpvCommand,
-            InMsgArgs::Cmd(CmdVal::Single((MpvCmd::Stop,))),
-        ),
-        &[
-            Token::TupleStruct {
-                name: "InMsg",
-                len: 2,
-            },
-            Token::Str("mpv-command"),
-            Token::Tuple { len: 1 },
-            Token::Str("stop"),
-            Token::TupleEnd,
-            Token::TupleStructEnd,
-        ],
-    );
+fn command_stop_serialization() {
+    let msg = InMsg::MpvCommand(InMsgArgs::Cmd(CmdVal::Single((MpvCmd::Stop,))));
+    let value = serde_json::to_value(&msg).unwrap();
+    assert_eq!(value, json!({"c":"MpvCommand","a":["stop"]}));
 }
 
 #[test]
-fn command_loadfile_tokens() {
-    assert_tokens(
-        &InMsg(
-            InMsgFn::MpvCommand,
-            InMsgArgs::Cmd(CmdVal::Double(MpvCmd::Loadfile, "some_file".to_string())),
-        ),
-        &[
-            Token::TupleStruct {
-                name: "InMsg",
-                len: 2,
-            },
-            Token::Str("mpv-command"),
-            Token::Tuple { len: 2 },
-            Token::Str("loadfile"),
-            Token::Str("some_file"),
-            Token::TupleEnd,
-            Token::TupleStructEnd,
-        ],
+fn command_loadfile_serialization() {
+    let msg = InMsg::MpvCommand(InMsgArgs::Cmd(CmdVal::Double(
+        MpvCmd::Loadfile,
+        "some_file".to_string(),
+    )));
+    let value = serde_json::to_value(&msg).unwrap();
+    assert_eq!(
+        value,
+        json!({"c":"MpvCommand","a":["loadfile","some_file"]})
     );
 }

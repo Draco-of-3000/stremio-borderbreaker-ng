@@ -119,16 +119,6 @@ macro_rules! stringable {
     };
 }
 
-#[allow(clippy::enum_variant_names)]
-#[derive(Display, FromStr, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
-#[serde(try_from = "String", into = "String")]
-#[display(style = "kebab-case")]
-pub enum InMsgFn {
-    MpvSetProp,
-    MpvCommand,
-    MpvObserveProp,
-}
-stringable!(InMsgFn);
 // Bool
 #[derive(Display, FromStr, Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
 #[serde(try_from = "String", into = "String")]
@@ -249,14 +239,3 @@ impl From<CmdVal> for Vec<String> {
         }
     }
 }
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(untagged)]
-pub enum InMsgArgs {
-    StProp(PropKey, PropVal),
-    Cmd(CmdVal),
-    ObProp(PropKey),
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct InMsg(pub InMsgFn, pub InMsgArgs);

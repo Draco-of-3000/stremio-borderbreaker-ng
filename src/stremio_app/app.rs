@@ -41,6 +41,8 @@ pub struct MainWindow {
     pub release_candidate: bool,
     pub autoupdater_setup_file: Arc<Mutex<Option<PathBuf>>>,
     pub saved_window_style: RefCell<WindowStyle>,
+    #[nwg_skip]
+    pub last_reported_size: RefCell<(u32, u32)>,
     #[nwg_resource]
     pub embed: nwg::EmbedResource,
     #[nwg_resource(source_embed: Some(&data.embed), source_embed_str: Some("MAINICON"))]
@@ -364,18 +366,27 @@ impl MainWindow {
         }
         // BorderBreaker: Notify player of window size
         if let Some(hwnd) = self.window.handle.hwnd() {
-             let mut rect = nwg::RECT::default();
-             unsafe { winapi::um::winuser::GetClientRect(hwnd, &mut rect) };
-             let width = (rect.right - rect.left) as u32;
-             let height = (rect.bottom - rect.top) as u32;
-             
-             let player_channel = self.player.channel.borrow();
-             if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
-                 let msg = serde_json::to_string(&crate::stremio_app::stremio_player::InMsg::WindowResized(
-                    crate::stremio_app::stremio_player::InMsgArgs::WindowResized(width, height)
-                )).unwrap();
-                player_tx.send(msg).ok();
-             }
+            let mut rect = nwg::RECT::default();
+            unsafe { winapi::um::winuser::GetClientRect(hwnd, &mut rect) };
+            let width = (rect.right - rect.left) as u32;
+            let height = (rect.bottom - rect.top) as u32;
+
+            let mut last_size = self.last_reported_size.borrow_mut();
+            if (width, height) != *last_size {
+                *last_size = (width, height);
+                let player_channel = self.player.channel.borrow();
+                if let Ok((player_tx, _)) = player_channel.as_ref().ok_or("no channel") {
+                    let msg = serde_json::to_string(
+                        &crate::stremio_app::stremio_player::InMsg::WindowResized(
+                            crate::stremio_app::stremio_player::InMsgArgs::WindowResized(
+                                width, height,
+                            ),
+                        ),
+                    )
+                    .unwrap();
+                    player_tx.send(msg).ok();
+                }
+            }
         }
     }
     fn on_toggle_fullscreen_notice(&self) {
