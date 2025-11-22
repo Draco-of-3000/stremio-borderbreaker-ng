@@ -25,3 +25,30 @@ jobs:
     - name: Test
       run: cargo test --target x86_64-pc-windows-msvc
 
+  installer:
+    needs: test
+    runs-on: windows-latest
+    steps:
+    - name: disable git eol translation
+      run: git config --global core.autocrlf false
+    - name: checkout
+      uses: actions/checkout@v3
+    - name: Stable toolchain
+      uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        toolchain: stable
+        target: x86_64-pc-windows-msvc
+    - name: Install Inno Setup
+      run: choco install innosetup --no-progress -y
+    - name: Build release binary
+      run: cargo build --release --target x86_64-pc-windows-msvc
+    - name: Create installer
+      shell: pwsh
+      run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup\Stremio.iss'
+    - name: Upload installer artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: stremio-shell-ng-installer
+        path: StremioSetup-v*.exe
+        if-no-files-found: error
+
