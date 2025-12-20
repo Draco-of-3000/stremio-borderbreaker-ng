@@ -9,8 +9,8 @@
 
 #define MyAppPublisher "BorderBreaker"
 #define MyAppCopyright "Copyright © " + GetDateTimeString('yyyy', '', '') + " " + MyAppPublisher
-#define MyAppURL "https://stremio-borderbreaker.local/"
-#define MyAppGoodbyeURL MyAppURL
+#define MyAppURL "https://www.stremio.com/"
+#define MyAppGoodbyeURL "https://www.stremio.com/"
 #define AssocTorrentExt ".torrent"
 #define AssocTorrentKey StringChange(MyAppName, " ", "") + AssocTorrentExt
 #define AssocTorrentDesc "Bittorrent seed file"
